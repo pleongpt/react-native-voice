@@ -151,8 +151,18 @@
     
     self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
     // Configure request so that results are returned before audio recording is finished
-    self.recognitionRequest.shouldReportPartialResults = YES;
-    
+
+    #if TARGET_OS_SIMULATOR
+        self.recognitionRequest.shouldReportPartialResults = YES;
+    #else
+        self.recognitionRequest.shouldReportPartialResults = NO;
+    #endif
+
+    if (@available(iOS 13.0, *)) {
+        // Runs in versions 13.0 and greater.
+        self.recognitionRequest.requiresOnDeviceRecognition = YES;
+    }
+
     if (self.recognitionRequest == nil) {
         [self sendResult:@{@"code": @"recognition_init"} :nil :nil :nil];
         [self teardown];
