@@ -142,6 +142,8 @@
     }
     
     self.speechRecognizer.delegate = self;
+
+    self.speechRecognizer.supportsOnDeviceRecognition = YES;
     
     // Start audio session...
     if (![self setupAudioSession]) {
@@ -228,7 +230,7 @@
     
     // Start recording and append recording buffer to speech recognizer
     @try {
-        [mixer installTapOnBus:0 bufferSize:1024 format:recordingFormat block:^(AVAudioPCMBuffer * _Nonnull buffer, AVAudioTime * _Nonnull when) {
+        [mixer installTapOnBus:0 bufferSize:4096 format:recordingFormat block:^(AVAudioPCMBuffer * _Nonnull buffer, AVAudioTime * _Nonnull when) {
             //Volume Level Metering
             UInt32 inNumberFrames = buffer.frameLength;
             float LEVEL_LOWPASS_TRIG = 0.5;
