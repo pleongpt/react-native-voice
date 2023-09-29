@@ -154,7 +154,7 @@
     self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
     // Configure request so that results are returned before audio recording is finished
 
-    self.recognitionRequest.shouldReportPartialResults = YES;
+    self.recognitionRequest.shouldReportPartialResults = NO;
 
     if (@available(iOS 13.0, *)) {
         // Runs in versions 13.0 and greater.
@@ -199,22 +199,22 @@
         }
         
         // No result.
-        if (result == nil) {
-            [self sendEventWithName:@"onSpeechEnd" body:nil];
-            [self teardown];
-            return;
-        }
+//        if (result == nil) {
+//            [self sendEventWithName:@"onSpeechEnd" body:nil];
+//            [self teardown];
+//            return;
+//        }
         
         BOOL isFinal = result.isFinal;
         
-        NSMutableArray* transcriptionDics = [NSMutableArray new];
-        for (SFTranscription* transcription in result.transcriptions) {
-            [transcriptionDics addObject:transcription.formattedString];
-        }
+//        NSMutableArray* transcriptionDics = [NSMutableArray new];
+//        for (SFTranscription* transcription in result.transcriptions) {
+//            [transcriptionDics addObject:transcription.formattedString];
+//        }
         
-        [self sendResult :nil :result.bestTranscription.formattedString :transcriptionDics :[NSNumber numberWithBool:isFinal]];
+        [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
         
-        if (isFinal || self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
+        if (self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
             if (!self.continuous) {
                 [self teardown];
