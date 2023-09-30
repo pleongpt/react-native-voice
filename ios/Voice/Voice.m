@@ -154,7 +154,7 @@
     self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
     // Configure request so that results are returned before audio recording is finished
 
-    self.recognitionRequest.shouldReportPartialResults = NO;
+    self.recognitionRequest.shouldReportPartialResults = YES;
 
     if (@available(iOS 13.0, *)) {
         // Runs in versions 13.0 and greater.
@@ -198,9 +198,7 @@
             return;
         }
         
-        // No result.
-        // PL: This is different from the recognized text being the empty string. If we don't tear down under
-        // this error condition, then result.isFinal will result in an exception.
+        // No result. (PL: result is nil. Cannot go further otherwise exception)
         if (result == nil) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
             [self teardown];
@@ -211,13 +209,12 @@
         // from the user.
         BOOL isFinal = result.isFinal;
 
-        // PL: Since we are not interested in partial results, commented this out to save the reporting steps.
-//        NSMutableArray* transcriptionDics = [NSMutableArray new];
-//        for (SFTranscription* transcription in result.transcriptions) {
-//            [transcriptionDics addObject:transcription.formattedString];
-//        }
+        NSMutableArray* transcriptionDics = [NSMutableArray new];
+        for (SFTranscription* transcription in result.transcriptions) {
+            [transcriptionDics addObject:transcription.formattedString];
+        }
         
-        [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
+        [self sendResult :nil :result.bestTranscription.formattedString :transcriptionDics :[NSNumber numberWithBool:isFinal]];
         
         if (isFinal || self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
