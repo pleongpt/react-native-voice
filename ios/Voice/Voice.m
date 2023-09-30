@@ -321,7 +321,7 @@
         [self sendEventWithName:@"onSpeechError" body:@{@"error": error}];
     }
     if (bestTranscription != nil) {
-        [self sendEventWithName:@"onSpeechResults" body:@{@"value":@[bestTranscription], @"isFinal": isFinal} ];
+        [self sendEventWithName:@"onSpeechResults" body:@{@"value":@[bestTranscription]} ];
     }
     if (transcriptions != nil) {
         [self sendEventWithName:@"onSpeechPartialResults" body:@{@"value":transcriptions}];
