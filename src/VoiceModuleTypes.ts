@@ -37,6 +37,7 @@ export type SpeechRecognizedEvent = {
 
 export type SpeechResultsEvent = {
   value?: string[];
+  isFinal?: boolean;
 };
 
 export type SpeechErrorEvent = {
