@@ -15,6 +15,7 @@
 @property (nonatomic) SFSpeechRecognitionTask* recognitionTask;
 @property (nonatomic) AVAudioSession* audioSession;
 /** Whether speech recognition is finishing.. */
+@property (nonatomic) NSTimer* timer;
 @property (nonatomic) BOOL isTearingDown;
 @property (nonatomic) BOOL continuous;
 
@@ -51,6 +52,13 @@
     }
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(teardown) name:RCTBridgeWillReloadNotification object:nil];
+
+    if (self.timer == nil) {
+        self.timer = [NSTimer scheduledTimerWithTimeInterval: 0.9
+                      target: self
+                      selector:@selector(onTick:)
+                      userInfo: nil repeats:NO];
+    }
     
     return YES;
 }
@@ -122,6 +130,13 @@
     self.audioSession = nil;
 }
 
+- (void)onTick:(NSTimer *)timer{
+    // time is up. Ready to send recognition result to user.
+    SFSpeechRecognitionResult *result = [timer userInfo];
+    BOOL isFinal = true;
+    [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
+}
+
 - (void) setupAndStartRecognizing:(NSString*)localeStr {
     self.audioSession = [AVAudioSession sharedInstance];
     self.priorAudioCategory = [self.audioSession category];
@@ -154,7 +169,7 @@
     self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
     // Configure request so that results are returned before audio recording is finished
 
-    self.recognitionRequest.shouldReportPartialResults = YES;
+    self.recognitionRequest.shouldReportPartialResults = NO;
 
     if (@available(iOS 13.0, *)) {
         // Runs in versions 13.0 and greater.
@@ -205,18 +220,29 @@
             return;
         }
 
+        // PL: Use a timer to check for silence (900 msec) before reporting the recognized text.
+        // Forget about replying on the isFinal flag.  No partial reports are needed.
+        if (self.timer) {
+            [self.timer invalidate];
+            self.timer = [NSTimer scheduledTimerWithTimeInterval: 0.9
+                          target: self
+                          selector:@selector(onTick:)
+                          userInfo: result repeats:NO];
+        }
+
+
         // PL: isFinal is never set when the user done with speaking.  It is set when there is a Voice.stop() call
         // from the user.
-        BOOL isFinal = result.isFinal;
+//        BOOL isFinal = result.isFinal;
 
-        NSMutableArray* transcriptionDics = [NSMutableArray new];
-        for (SFTranscription* transcription in result.transcriptions) {
-            [transcriptionDics addObject:transcription.formattedString];
-        }
+//        NSMutableArray* transcriptionDics = [NSMutableArray new];
+//        for (SFTranscription* transcription in result.transcriptions) {
+//            [transcriptionDics addObject:transcription.formattedString];
+//        }
         
-        [self sendResult :nil :result.bestTranscription.formattedString :transcriptionDics :[NSNumber numberWithBool:isFinal]];
+//        [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
         
-        if (isFinal || self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
+        if (self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
             if (!self.continuous) {
                 [self teardown];
