@@ -198,21 +198,25 @@
             return;
         }
         
+        // PL: Commented this out.  Teardown should only be invoked either due to error or by explicity call from user.
         // No result.
-        if (result == nil) {
-            [self sendEventWithName:@"onSpeechEnd" body:nil];
-            [self teardown];
-            return;
-        }
-        
+//        if (result == nil) {
+//            [self sendEventWithName:@"onSpeechEnd" body:nil];
+//            [self teardown];
+//            return;
+//        }
+
+        // PL: isFinal is never set when the user done with speaking.  It is set when there is a Voice.stop() call
+        // from the user.
         BOOL isFinal = result.isFinal;
+
+        // PL: Since we are not interested in partial results, commented this out to save the reporting steps.
+//        NSMutableArray* transcriptionDics = [NSMutableArray new];
+//        for (SFTranscription* transcription in result.transcriptions) {
+//            [transcriptionDics addObject:transcription.formattedString];
+//        }
         
-        NSMutableArray* transcriptionDics = [NSMutableArray new];
-        for (SFTranscription* transcription in result.transcriptions) {
-            [transcriptionDics addObject:transcription.formattedString];
-        }
-        
-        [self sendResult :nil :result.bestTranscription.formattedString :transcriptionDics :[NSNumber numberWithBool:isFinal]];
+        [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
         
         if (isFinal || self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
