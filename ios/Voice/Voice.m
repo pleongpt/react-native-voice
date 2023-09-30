@@ -154,7 +154,7 @@
     self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
     // Configure request so that results are returned before audio recording is finished
 
-    self.recognitionRequest.shouldReportPartialResults = YES;
+    self.recognitionRequest.shouldReportPartialResults = NO;
 
     if (@available(iOS 13.0, *)) {
         // Runs in versions 13.0 and greater.
@@ -198,13 +198,14 @@
             return;
         }
         
-        // PL: Commented this out.  Teardown should only be invoked either due to error or by explicity call from user.
         // No result.
-//        if (result == nil) {
-//            [self sendEventWithName:@"onSpeechEnd" body:nil];
-//            [self teardown];
-//            return;
-//        }
+        // PL: This is different from the recognized text being the empty string. If we don't tear down under
+        // this error condition, then result.isFinal will result in an exception.
+        if (result == nil) {
+            [self sendEventWithName:@"onSpeechEnd" body:nil];
+            [self teardown];
+            return;
+        }
 
         // PL: isFinal is never set when the user done with speaking.  It is set when there is a Voice.stop() call
         // from the user.
