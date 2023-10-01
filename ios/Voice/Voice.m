@@ -28,6 +28,8 @@
 
 @end
 
+const int STT_SILENCE_PERIOD_IN_SECONDS = 0.6;
+
 @implementation Voice
 {
 }
@@ -54,7 +56,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(teardown) name:RCTBridgeWillReloadNotification object:nil];
 
     if (self.timer == nil) {
-        self.timer = [NSTimer scheduledTimerWithTimeInterval: 0.9
+        self.timer = [NSTimer scheduledTimerWithTimeInterval: STT_SILENCE_PERIOD_IN_SECONDS
                       target: self
                       selector:@selector(onTick:)
                       userInfo: nil repeats:NO];
@@ -224,7 +226,7 @@
         // Forget about replying on the isFinal flag.  No partial reports are needed.
         if (self.timer) {
             [self.timer invalidate];
-            self.timer = [NSTimer scheduledTimerWithTimeInterval: 0.9
+            self.timer = [NSTimer scheduledTimerWithTimeInterval: STT_SILENCE_PERIOD_IN_SECONDS
                           target: self
                           selector:@selector(onTick:)
                           userInfo: result repeats:NO];
