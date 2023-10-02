@@ -28,7 +28,7 @@
 
 @end
 
-const int STT_SILENCE_PERIOD_IN_SECONDS = 0.6;
+const int STT_SILENCE_PERIOD_IN_SECONDS = 0.5;
 
 @implementation Voice
 {
