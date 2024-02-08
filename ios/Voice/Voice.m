@@ -28,7 +28,7 @@
 
 @end
 
-const int STT_SILENCE_PERIOD_IN_SECONDS = 0.4;
+const double STT_SILENCE_PERIOD_IN_SECONDS = 0.4;
 
 @implementation Voice
 {
@@ -135,6 +135,7 @@ const int STT_SILENCE_PERIOD_IN_SECONDS = 0.4;
 - (void)onTick:(NSTimer *)timer{
     // time is up. Ready to send recognition result to user.
     SFSpeechRecognitionResult *result = [timer userInfo];
+//    NSLog(@"onTick: speechDuration=%f", result.speechRecognitionMetadata.speechDuration);
     BOOL isFinal = true;
     [self sendResult :nil :result.bestTranscription.formattedString :nil :[NSNumber numberWithBool:isFinal]];
 }
@@ -142,7 +143,7 @@ const int STT_SILENCE_PERIOD_IN_SECONDS = 0.4;
 - (void) setupAndStartRecognizing:(NSString*)localeStr {
     self.audioSession = [AVAudioSession sharedInstance];
     self.priorAudioCategory = [self.audioSession category];
-    // Tear down resources before starting speech recognition..
+    // Tear down resources before starting speech recognition
     [self teardown];
     
     self.sessionId = [[NSUUID UUID] UUIDString];
@@ -222,14 +223,23 @@ const int STT_SILENCE_PERIOD_IN_SECONDS = 0.4;
             return;
         }
 
-        // PL: Use a timer to check for silence (900 msec) before reporting the recognized text.
+        // PL: Use a timer to check for silence before reporting the recognized text. Double the
+        // silence wait time if the utterance is longer than 10 seconds to allow for time to breathe
+        // before calling the end of the utterance.
         // Forget about replying on the isFinal flag.  No partial reports are needed.
         if (self.timer) {
             [self.timer invalidate];
-            self.timer = [NSTimer scheduledTimerWithTimeInterval: STT_SILENCE_PERIOD_IN_SECONDS
+            if (result.speechRecognitionMetadata.speechDuration > 10.0) {
+                self.timer = [NSTimer scheduledTimerWithTimeInterval: STT_SILENCE_PERIOD_IN_SECONDS * 2
                           target: self
                           selector:@selector(onTick:)
                           userInfo: result repeats:NO];
+            } else {
+                self.timer = [NSTimer scheduledTimerWithTimeInterval: STT_SILENCE_PERIOD_IN_SECONDS
+                          target: self
+                          selector:@selector(onTick:)
+                          userInfo: result repeats:NO];
+            }
         }
 
 
